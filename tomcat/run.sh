@@ -31,26 +31,26 @@ else
 fi
 
 
-# git clone Dockerfile for nginx
+# git clone Dockerfile for tomcat
 git clone https://github.com/lavender2020/DevOps.git
 
 # pull Docker file to build docker image
-cd DevOps/nginx/ && docker build -t lavender.info/nginx:latest .
+cd DevOps/tomcat/ && docker build -t lavender.info/tomcat:latest .
 
 # run docker container
-docker run -d --name nginx --restart=always -p 80:80 -p 4000:22 -p 9001:9001 lavender.info/nginx:latest
+docker run -d --restart=always --name tomcat -p 8080:8080 -p 4001:22 -p 9002:9001 lavender.info/tomcat:latest
 
 # wating for service starting
 sleep 10
 
-# check nginx start successfully
-STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/static/index.html)
+# check tomcat start successfully
+STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080)
 
 if [ $STATUS -eq 200 ]; then
-    echo "Nginx running successfully."
+    echo "Tomcat running successfully."
     exit 0
 else
-    echo "Nginx running unsuccessfully, please check your deployment."
+    echo "Tomcat running unsuccessfully, please check your deployment."
     exit 1
 fi
 
