@@ -1,0 +1,33 @@
+def remote = [:]
+remote.name = “nodejs01”
+remote.host = “nodejs01.lavender.info”
+remote.allowAnyHosts = true
+
+node {
+   def mvnHome
+   stage('Preparation') {
+      git branch: "dev", credentialsId: 'id_on_jenkins', url: 'https://github.com/lavender2020/jenkins_pipeline_node.git'
+      NodeJSHome = tool 'Nodejs'
+   }
+   stage('Build') {
+      // Run the npm build
+       sh "'${NodeJSHome}/bin/npm' install "
+       sh "'${NodeJSHome}/bin/npm' run build "
+       sh "tar zcvf static.tar.gz dist/*"
+   }
+   stage('npm test') {
+        //npm 测试
+        sh "'${NodeJSHome}/bin/npm' run test"
+   }
+   withCredentials([usernamePassword(credentialsId: ‘id_ssh_private_key’, usernameVariable: 'userName')]) {
+        remote.user = userName
+        remote.identity = id_ssh_private_key
+
+        stage(“deployment over ssh”) {
+            sshRemove remote: remote, path: ‘/usr/share/nginx/html/’
+            sshPut remote: remote, from: ‘static.tar.gz’, into: ‘/usr/share/nginx/html/’
+            sshCommand remote: remote, command: ‘tar -zxvf /usr/share/nginx/html/static.tar.gz -C /usr/share/nginx/html/’
+            sshCommand remote: remote, command: ‘supervisorctl restart tomcat’
+        }
+   }
+}
